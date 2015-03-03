@@ -3,6 +3,25 @@ Que peut-on immédiatement conclure sur le temps total d’exécution ? En dédu
 ramène à uniquement respecter les dépendances du graphe.
 *)
 
+(*Travail écrit :
+Identifiez ces états avec les listes Y , Z et X = V \(Y ∪ Z). Quelle propriété garantit que l’ordre produit
+par cet algorithme est topologique, c’est-à-dire qu’il respecte l’ordre partiel défini par les dépendances
+du graphe ? Quelle propriété garantit qu’il est total ?
+
+Z symbolise l'état des noeuds numérotés.
+Y symbolise l'état des noeuds non numérotés et avec tous ces prédécesseurs numérotés.
+X symbolise l'état des noeuds non numérotés et  avec certians de ces prédécésseurs non numérotés.
+*)
+
+(* Travail écrit :
+En supposant que les fonctions Succ et Prec ont un coût constant, calculer l’ordre de complexité de
+l’algorithme en fonction du nombre de nœuds n et du nombre d’arcs m.
+*)
+
+(*Travail écrit :
+Comment appele-t-on les parcours induits par l’utilisation d’une pile ? Et d’une file ?
+*)
+
 
 
 (* entrees: 
@@ -13,6 +32,7 @@ ramène à uniquement respecter les dépendances du graphe.
    - vous implementerez l'algorithme 1 de l'enonce, en utilisant un format de file pour Y (section 1)
    *)
 val tri_topologique : DAG -> Vertex list
+
 
 (* trace d'execution 
    definie en Section 2 de l'enonce (voir Figure 2)
