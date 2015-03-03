@@ -1,0 +1,82 @@
+(* entrees: 
+   - un DAG
+   sorties:
+   - une liste des sommets du DAG ordonnées selon un tri topologique 
+   specifs: 
+   - vous implementerez l'algorithme 1 de l'enonce, en utilisant un format de file pour Y (section 1)
+   *)
+(*val tri_topologique : DAG -> Vertex list*)
+
+let tri_topologique DAG =
+	let Y = V_sansDep DAG in
+		let Z = [] in
+			let i = 1 in
+				let rec aux vi = 			
+					match vi with
+					|[]-> Z(*retourner Z*)
+					|h::t-> begin (*numéroter h, ajouter h à Z*)	
+							Mark.set h i;
+							h::Z;
+							i = i+1;
+							end		
+							let vj = succ h in
+								match vj with
+								|[]-> aux t
+								|a::b-> if List.mem (prec a) Z then
+											aux a::t
+											else
+											aux t
+				in aux Y
+;;				
+
+
+(* trace d'execution 
+   definie en Section 2 de l'enonce (voir Figure 2)
+*)
+type Trace = (Vertex list) list 
+
+(* entrees: 
+   - un DAG
+   sorties:
+   - une trace d'execution du DAG 
+   specifs:
+   - le DAG est suppose non pondere 
+   - les ressources sont supposees illimitees (section 2.1)
+   *)
+val ordonnanceur_ressources_illimitees : DAG -> Trace
+
+(* entrees: 
+   - un nombre entier de ressources
+   - un DAG
+   sorties:
+   - une trace d'execution du DAG 
+   specifs: 
+   - le DAG est suppose non pondere
+   - les ressources sont supposees limitees (section 2.2)
+   - vous n'utiliserez pas d'heuristique
+   *)
+val ordonnanceur_ressources_limitees_sans_heuristique : int -> DAG -> Trace
+
+(* entrees: 
+   - un nombre entier de ressources
+   - un DAG
+   sorties:
+   - une trace d'execution du DAG 
+   specifs: 
+   - le DAG est suppose non pondere
+   - les ressources sont supposees limitees (section 2.2)
+   - vous utiliserez une heuristique pour ameliorer la duree de la trace 
+   *)
+val ordonnanceur_ressources_limitees_avec_heuristique : int -> DAG -> Trace
+
+
+(* entrees: 
+   - un nombre entier de ressources
+   - un DAG
+   sorties:
+   - une trace d'execution du DAG 
+   specifs: 
+   - le DAG est suppose pondere (section 2.3)
+   - les ressources sont supposees limitees 
+   *)
+val ordonnanceur_graphe_pondere : int -> DAG -> Trace
