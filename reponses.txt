@@ -1,0 +1,58 @@
+1) parcours sequentiel
+--Que peut-on immédiatement conclure sur le temps total d’exécution ? En déduire que le problème se
+ramène à uniquement respecter les dépendances du graphe.
+
+Au minimum la somme des temps d'execution de chaque tache
+
+1.1)Tri topologique
+--Identifiez ces états avec les listes Y , Z et X = V \(Y ∪ Z). Quelle propriété garantit que l’ordre produit
+par cet algorithme est topologique, c’est-à-dire qu’il respecte l’ordre partiel défini par les dépendances
+du graphe ? Quelle propriété garantit qu’il est total ?
+
+Y : liste des vertex avant l'etablissement de l'ordre topologique => 
+VERTICES NON NUMEROTES ET PREDECESSEURS NON NUMEROTES
+Z : le tri topologique est fini =>
+TOUS LES NOEUDS SONT NUMEROTES
+X : NON NUMEROTES ET AVEC TOUS LES PREDECESSEURS NUMEROTES
+Z contenant les noeuds déja numerotes, on verifie dans cet algo que tous les prédécésseurs d'un noeud soient déja numerotes,
+de ce fait on vérifie d'abord que tout l'etage est numeroté avant de passer au(x) noeud(s) induit(s) : 
+Ordre partiel
+Un tri topologique permet de transformer un DAG en un chemin constitué de tous les noeuds numerotes:
+Ordre total
+
+--En supposant que les fonctions Succ et Prec ont un coût constant, calculer l’ordre de complexité de
+l’algorithme en fonction du nombre de nœuds n et du nombre d’arcs m.
+
+
+--Comment appele-t-on les parcours induits par l’utilisation d’une pile ? Et d’une file ?
+
+Parcours en profondeur pour la pile
+Parcours en largeur pour la file
+
+
+2)Parcours parallele
+
+2.1)Sans contraintes de ressources
+--Quels nœuds sont traités à la première étape ? A la k-ième étape ? Conclure sur la valeur du temps
+d’exécution total (i.e., le nombre total d’étapes).
+
+
+2.2)Avec contraintes de ressources limitees
+--Donner une borne inférieure du temps total d’exécution en fonction du nombre de nœuds n et du nombre
+de ressources r. Dans le cas où cette borne inférieure est atteinte, que peut-on dire sur l’utilisation des
+ressources à chaque étape ?
+
+--Comment se traduit la contrainte de ressources limitées sur les listes à chaque étape ?
+
+
+--Proposer une heuristique pour choisir les tâches traitées en priorité (i.e., les r premières tâches de Y ).
+
+--Analyser l’efficacité de l’heuristique sur différents graphes, en faisant varier le nombre de ressources r.
+
+
+2.3)Ponderation des noeuds du graphes
+--Comment représenter un nœud pondéré par un graphe aux nœuds non pondérés ? En déduire une
+méthode simple pour résoudre le problème sur des graphes aux nœuds pondérés.
+
+--Que remarquez-vous ? Expliquer les disparités au niveau du temps de calcul de votre programme entre
+les différents graphes tests fournis.
