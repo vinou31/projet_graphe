@@ -18,6 +18,8 @@ open DAG;;
 *)
 
 
+let rec print_vertex lv = List.fold_right (fun v x -> (V.label v)::x) lv [];;
+
 let rec is_include l1 l2 = 
 	match l1 with
 		|[]->true
@@ -29,42 +31,40 @@ let rec is_include l1 l2 =
 
 (*sort les noeuds sans dependance*) (*complexité : O (card (V))*)
 let v_sansDep dag =
-	let list_v = fold_vertex (fun v x -> v::x) dag [] in
-	let list_sans_dep = [] in
-		let rec extract lv = 
-			match lv with 
-			|[] -> list_sans_dep
-			|t::q ->
-				if (in_degree dag t = 0) then
-					t::extract q
+	let list_v = fold_vertex (fun v x -> v::x) dag [] in		
+		List.fold_right (fun v x ->
+				if (in_degree dag v = 0) then
+					v::x
 				else
-					extract q
-		in extract list_v
+					x) list_v []
+		
 ;;
+
+
+
+let rec print_mark_v lv = List.fold_right (fun v x -> (Mark.get v)::x) lv [];;
 
 let tri_topologique dag =
 	let y = v_sansDep dag in
-		let z = [] in
-			let i = 1 in
-				let rec aux vi = 			
+				let rec aux vi i z = 			
 					match vi with
 					|[]-> z(*retourner z*)
-					|h::t-> 
+					|h::t-> 				
 						begin (*numéroter h, ajouter h à z*)	
-							Mark.set h i;
-							h::z;
-							i = i+1;
+							(*Mark.set h i;*)							
 							(*manque une fonction recursive pour parcourir tout vj*)
-							let vj = succ h in
-								match vj with
-								|[]-> aux t
-								|a::b-> if List.mem (prec a) z then
+							let vj = succ dag h in
+								let rec aux2 lvj lvi lz=  
+								match lvj with
+								|[]-> aux (t@lvi) (i+1) (lz)
+								|a::b-> if is_include (pred dag a) lz then
 												(*aux a::t*)
-												aux t@[a]
+												aux2 b (lvi@[a]) lz											
 											else
-												aux t
-						end
-				in aux y
+												aux2 b lvi lz
+							in aux2 vj [] (h::z);
+						end						
+				in aux y 1 []
 ;;				
 
 
