@@ -36,10 +36,6 @@ Parcours en largeur pour la file
 --Quels nœuds sont traités à la première étape ? A la k-ième étape ? Conclure sur la valeur du temps
 d’exécution total (i.e., le nombre total d’étapes).
 
-A la première étape, on traite la liste des noeuds qui n'ont aucune dépendance en entrée. A la k-ième étape
-on traite les noeuds dont une dépendance reste non traité.
-Le temps d'execution sera donc égale à la profondeur max du DAG
-
 
 2.2)Avec contraintes de ressources limitees
 --Donner une borne inférieure du temps total d’exécution en fonction du nombre de nœuds n et du nombre
