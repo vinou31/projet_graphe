@@ -20,6 +20,7 @@ open DAG;;
 
 let rec print_vertex lv = List.fold_right (fun v x -> (V.label v)::x) lv [];;
 let rec print_mark_v lv = List.fold_right (fun v x -> (Mark.get v)::x) lv [];;
+let rec print_vertex_list lv = List.fold_right (fun v x -> (print_vertex v)::x) lv [];;
 
 let rec is_include l1 l2 = 
 	match l1 with
@@ -81,11 +82,11 @@ let tri_topologique dag =
 							let new_z = h::z in	
 								let successeur = succ dag h in
 									let new_vi = List.fold_right (fun v x ->if is_include (pred dag v) new_z then
-																		x::v										
+																		x@[v]										
 																	else
 																		x)
-																  successeur vi in
-									constructeur_z new_vi (i+1) new_z;
+																  successeur [] in
+									constructeur_z (t@new_vi) (i+1) new_z;
 							end
 				in constructeur_z y 1 []
 ;;	
@@ -109,43 +110,34 @@ type Trace = (Vertex list) list
 (*
 val ordonnanceur_ressources_illimitees : DAG -> Trace
 *)
-
-(*
-let rec find_next_step dag  etapePrecedente nextStep = 
+let rec find_next_step dag etapePrecedente trace nextStep = 
 		match etapePrecedente with 
 			|[] -> nextStep
 			|a::la -> (*s'il reste des elements de l'etape precedente*)
-				let lSucc = (succ a) in (*sur la liste des successeurs de chacun de ces elements*)
-				let rec analyse lv = (*on re*)
-					match lv with
-						|[]->(find_next_step dag  la nextStep)
-						|a::b -> 
-							if(is_include (prec a) etapePrecedente) then
-								begin
-									a::nextStep;
-									analyse b;
-								end
-							else
-								analyse b
-				in (analyse lSucc)::(find_next_step dag la nextStep)
+				let lSucc = succ dag a in (*sur la liste des successeurs de chacun de ces elements*)
+					let new_nxt = List.fold_right (fun v x ->if (is_include (pred dag v) (etapePrecedente@(List.flatten trace))) then
+																		(x@[v])										
+																	else
+																		x)
+																  lSucc nextStep 
+								in find_next_step dag la trace new_nxt									
 ;;
 
-let rec ordonnanceur_ressources_illimitees dag  = 
-	let build_trace = [v_sansDep dag] in
-		match build_trace with
-			|[] -> trace dag ([v_sansDep dag]::build_trace)
-			|[a]-> let next = find_next_step dag a [] in
-				if ((next)=[]) then
-					trace
-				else
-					trace dag ((next)::trace)
-			|etape::autres_etapes -> let next = find_next_step dag a [] in
-				if ((next)=[]) then
-					build_trace
-				else
-					trace dag ((next)::build_trace)
+let rec ordonnanceur_ressources_illimitees dag trace = 
+		match trace with
+			|[] -> ordonnanceur_ressources_illimitees dag ([v_sansDep dag]@trace)
+			|[a]-> let next = find_next_step dag a trace [] in
+					if ((next)=[]) then
+						trace
+					else
+						ordonnanceur_ressources_illimitees dag ([next]@trace)
+			|etape::autres_etapes -> let next = find_next_step dag etape trace [] in
+										if ((next)=[]) then
+											trace
+										else
+											ordonnanceur_ressources_illimitees dag ([next]@trace)
 ;;				
-*)
+
 
 (* entrees: 
    - un nombre entier de ressources
