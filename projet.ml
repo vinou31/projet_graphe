@@ -22,6 +22,14 @@ let rec print_vertex lv = List.fold_right (fun v x -> (V.label v)::x) lv [];;
 let rec print_mark_v lv = List.fold_right (fun v x -> (Mark.get v)::x) lv [];;
 let rec print_vertex_list lv = List.fold_right (fun v x -> (print_vertex v)::x) lv [];;
 
+let rec separator l1 l2 n =
+	if n = 0 then
+		l1,l2
+	else
+		separator (List.tl l1) ((List.hd l1)::l2) (n-1)
+	;;
+	
+
 let rec is_include l1 l2 = 
 	match l1 with
 		|[]->true
@@ -110,7 +118,7 @@ type Trace = (Vertex list) list
 (*
 val ordonnanceur_ressources_illimitees : DAG -> Trace
 *)
-let rec find_next_step dag etapePrecedente trace nextStep = 
+let rec find_next_step_illimite dag etapePrecedente trace nextStep = 
 		match etapePrecedente with 
 			|[] -> nextStep
 			|a::la -> (*s'il reste des elements de l'etape precedente*)
@@ -120,22 +128,24 @@ let rec find_next_step dag etapePrecedente trace nextStep =
 																	else
 																		x)
 																  lSucc nextStep 
-								in find_next_step dag la trace new_nxt									
+								in find_next_step_illimite dag la trace new_nxt									
 ;;
 
-let rec ordonnanceur_ressources_illimitees dag trace = 
+let ordonnanceur_ressources_illimitees dag =
+	let rec ordonnanceur trace =
 		match trace with
-			|[] -> ordonnanceur_ressources_illimitees dag ([v_sansDep dag]@trace)
-			|[a]-> let next = find_next_step dag a trace [] in
+			|[] -> ordonnanceur ([v_sansDep dag]@trace)
+			|[a]-> let next = find_next_step_illimite dag a trace [] in
 					if ((next)=[]) then
 						trace
 					else
-						ordonnanceur_ressources_illimitees dag ([next]@trace)
-			|etape::autres_etapes -> let next = find_next_step dag etape trace [] in
+						ordonnanceur ([next]@trace)
+			|etape::autres_etapes -> let next = find_next_step_illimite dag etape trace [] in
 										if ((next)=[]) then
 											trace
 										else
-											ordonnanceur_ressources_illimitees dag ([next]@trace)
+											ordonnanceur ([next]@trace)
+					in ordonnanceur []
 ;;				
 
 
@@ -152,6 +162,57 @@ let rec ordonnanceur_ressources_illimitees dag trace =
 (*
 val ordonnanceur_ressources_limitees_sans_heuristique : int -> DAG -> Trace
 *)
+let rec find_next_step_limite_sans_heuristique  dag etapePrecedente trace nextStep = 
+		match etapePrecedente with 
+			|[] -> nextStep
+			|a::la -> (*s'il reste des elements de l'etape precedente*)
+				let lSucc = succ dag a in (*sur la liste des successeurs de chacun de ces elements*)
+					let new_nxt = List.fold_right (fun v x ->if (is_include (pred dag v) (etapePrecedente@(List.flatten trace)))  then
+																		(x@[v])										
+																	else
+																		x)
+																  lSucc nextStep 
+								in find_next_step_limite_sans_heuristique dag la trace new_nxt									
+;;
+
+let ordonnanceur_ressources_limitees_sans_heuristique ressource dag =
+	let rec ordonnanceur trace =
+		match trace with
+			|[] -> let sans_dep = v_sansDep dag in
+						if (List.length sans_dep)> ressource then
+							let l1,l2 = separator sans_dep [] ressource in
+								ordonnanceur ([l1]@[l2]@trace)
+						else
+								ordonnanceur ([sans_dep]@trace)
+			|[a]-> let next = find_next_step_limite_sans_heuristique dag a trace [] in
+					if ((next)=[]) then
+						trace
+					else
+						if (List.length next)> ressource then
+							let l1,l2 = separator next [] ressource in
+								let taille = (List.length a) in
+									if taille < ressource then
+										begin
+										a = separator l2 a (ressource-taille);
+										l2 = separator l1 l2 (ressource-taille);
+										end
+										if (l1=[]) then
+											ordonnanceur ([l2]@trace)
+										else
+											ordonnanceur ([l1]@[l2]@trace)
+									else
+										ordonnanceur ([l1]@[l2]@trace)
+						else
+							ordonnanceur ([next]@trace)
+			|etape::autres_etapes -> let next = find_next_step_limite_sans_heuristique ressource dag etape trace [] in
+										if ((next)=[]) then
+											trace
+										else
+											ordonnanceur ([next]@trace)
+					in ordonnanceur []
+;;	
+
+
 
 (* entrees: 
    - un nombre entier de ressources
@@ -166,6 +227,7 @@ val ordonnanceur_ressources_limitees_sans_heuristique : int -> DAG -> Trace
 (*
 val ordonnanceur_ressources_limitees_avec_heuristique : int -> DAG -> Trace
 *)
+
 
 
 (* entrees: 

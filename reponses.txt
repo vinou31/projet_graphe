@@ -48,6 +48,8 @@ ressources à chaque étape ?
 
 --Comment se traduit la contrainte de ressources limitées sur les listes à chaque étape ?
 
+on impose une taille maximal à la liste de la trace.
+
 
 --Proposer une heuristique pour choisir les tâches traitées en priorité (i.e., les r premières tâches de Y ).
 
