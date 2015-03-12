@@ -4,6 +4,9 @@ Pour visualiser les graphes :
 	dot dag.dot -Tps -o dag.ps
 	evince dag.ps
 *)
+open Graph.Pack.Graph;;
+
+
 
 module Vertex = struct
   type t = string*int

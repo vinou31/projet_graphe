@@ -22,28 +22,37 @@ let rec print_vertex lv = List.fold_right (fun v x -> (V.label v)::x) lv [];;
 let rec print_mark_v lv = List.fold_right (fun v x -> (Mark.get v)::x) lv [];;
 let rec print_vertex_list lv = List.fold_right (fun v x -> (print_vertex v)::x) lv [];;
 
+
+
+	
 let rec separator l1 l2 n liste_fini =
 match liste_fini with
-|[]->if (List.length l1)>(n) then
-		separator (List.tl l1) ((List.hd l1)::l2) (n) []
-	else
-		if (List.length l2>n) then
-			separator l2 [] (n) ([l1]@liste_fini)
+|[]->if (List.length l2)<(n) then
+		if (l1<>[]) then
+			separator (List.tl l1) ((List.hd l1)::l2) (n) []
 		else
-			if (l2 = []) then
-				[l1]@liste_fini
-			else
-				([l2]@[l1]@liste_fini)		
-|a::b->if (List.length l1)>(n) then		
-		separator (List.tl l1) ((List.hd l1)::l2) (n) liste_fini
+			[l2]@liste_fini
 	else
-		if (List.length l2>n) then
-			separator l2 [] (n) ([l1]@liste_fini)
+		if (List.length l1>n) then
+			separator l1 [] (n) ([l2]@liste_fini)
 		else
-			if (l2 = []) then
-				[l1]@liste_fini
+			if (l1 = []) then
+				[l2]@liste_fini
 			else
-				([l2]@[l1]@liste_fini)
+				([l1]@[l2]@liste_fini)		
+|a::b->if (List.length l2)<(n) then
+			if (l1<>[]) then
+				separator (List.tl l1) ((List.hd l1)::l2) (n) liste_fini
+			else
+				[l2]@liste_fini
+		else
+			if (List.length l1>n) then
+				separator l1 [] (n) ([l2]@liste_fini)
+			else
+				if (l1 = []) then
+					[l2]@liste_fini
+				else
+					([l1]@[l2]@liste_fini)
 	;;
 	
 
@@ -51,9 +60,35 @@ let rec is_include l1 l2 =
 	match l1 with
 		|[]->true
 		|t::q ->
-			if (List.mem t l2) then
+			if (List.memq t l2) then
 				is_include q l2
 			else false
+;;
+
+let rec is_not_include l1 l2 = 
+	match l1 with
+		|[]->true
+		|t::q ->if  (List.memq t l2) then
+				false
+			else 
+				is_not_include q l2
+;;
+
+
+let is_depend l1 l2 dag =
+	let l = List.fold_right (fun v x ->
+				if ((is_not_include (pred dag v) (l2))) then
+					(v::x)
+				else
+					x) l1 [] in
+	let rec aux lv s = 
+		match lv with
+		|[]-> l,s
+		|a::b-> if (List.mem a l) then
+					aux b s
+				else
+					aux b (a::s)
+	in aux l1 []	
 ;;
 
 (*sort les noeuds sans dependance*) (*complexité : O (card (V))*)
@@ -63,8 +98,7 @@ let v_sansDep dag =
 				if (in_degree dag v = 0) then
 					v::x
 				else
-					x) list_v []
-		
+					x) list_v []		
 ;;
 
 
@@ -135,6 +169,16 @@ type Trace = (Vertex list) list
 (*
 val ordonnanceur_ressources_illimitees : DAG -> Trace
 *)
+let trouve_sans_dep dag trace =
+	let list_v = fold_vertex (fun v x -> v::x) dag [] in		
+		List.fold_right (fun v x ->
+				if ((is_include (pred dag v) (List.flatten trace)) && (not (List.mem v (List.flatten trace)))) then
+					v::x
+				else
+					x) list_v []
+;;
+
+(*
 let rec find_next_step_illimite dag etapePrecedente trace nextStep = 
 		match etapePrecedente with 
 			|[] -> nextStep
@@ -147,15 +191,18 @@ let rec find_next_step_illimite dag etapePrecedente trace nextStep =
 																  lSucc nextStep 
 								in find_next_step_illimite dag la trace new_nxt									
 ;;
+*)
+
+
 
 let ordonnanceur_ressources_illimitees dag =
-	let rec ordonnanceur trace =
-		let y = trouve_sans_dep dag trace in
-					if (y =[]) then
-						trace
-					else
-						ordonnanceur ([y]@trace)
-		in ordonnanceur []
+		let rec ordonnanceur trace=
+			let y = trouve_sans_dep dag trace in
+						if (y =[]) then
+							trace
+						else
+							ordonnanceur ([y]@trace)
+			in ordonnanceur []
 ;;				
 
 
@@ -172,36 +219,6 @@ let ordonnanceur_ressources_illimitees dag =
 (*
 val ordonnanceur_ressources_limitees_sans_heuristique : int -> DAG -> Trace
 *)
-let trouve_sans_dep dag trace =
-	let list_v = fold_vertex (fun v x -> v::x) dag [] in		
-		List.fold_right (fun v x ->
-				if ((is_include (pred dag v) (List.flatten trace)) && ((List.mem v (List.flatten trace))=false)) then
-					v::x
-				else
-					x) list_v []
-;;
-
-(*
-let rec update_sansDep dag ressources etapeSuivanteTrouvee reste trace_flattened = 
-	match  reste with 
-	|[] -> 
-	|a::b ->
-	*)
-		
-
-let rec find_next_step_limite_sans_heuristique  dag etapePrecedente trace nextStep = 
-		match etapePrecedente with 
-			|[] -> nextStep
-			|a::la -> (*s'il reste des elements de l'etape precedente*)
-				let lSucc = succ dag a in (*sur la liste des successeurs de chacun de ces elements*)
-					let new_nxt = List.fold_right (fun v x ->if (is_include (pred dag v) (etapePrecedente@(List.flatten trace)))  then
-																		(x@[v])										
-																	else
-																		x)
-																  lSucc nextStep 
-								in find_next_step_limite_sans_heuristique dag la trace new_nxt									
-;;
-
 let ordonnanceur_ressources_limitees_sans_heuristique ressource dag =
 	let rec ordonnanceur trace =
 		match trace with
@@ -210,21 +227,20 @@ let ordonnanceur_ressources_limitees_sans_heuristique ressource dag =
 						trace
 					else
 						ordonnanceur ((separator (y) [] ressource [])@trace)		
-		|a::b ->if (List.length a) < ressource then 
-					let y = (trouve_sans_dep dag trace) in
+		|a::b ->let y = (trouve_sans_dep dag trace) in
 						if (y =[]) then
 							trace
 						else
-							let ajust = separator y a ressource []  in
-							ordonnanceur (ajust@trace)
-				else
-					let y = (trouve_sans_dep dag trace) in
-					if (y =[]) then
-						trace
-					else							
-						ordonnanceur ((separator y [] ressource [])@trace)	
+							let (indep,new_y) = is_depend y a dag in							
+								if ((List.length a) < ressource) && (indep<>[])  then									 
+									let ajust = List.rev (separator indep a ressource [])  in
+										(ordonnanceur ((separator (new_y@(List.flatten(List.rev (List.tl ajust)))) [] ressource [])@[List.hd ajust]@b))
+								else						
+									ordonnanceur ((separator y [] ressource [])@trace)	
 		in ordonnanceur []
 ;;	
+
+
 
 
 
