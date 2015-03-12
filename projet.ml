@@ -22,11 +22,28 @@ let rec print_vertex lv = List.fold_right (fun v x -> (V.label v)::x) lv [];;
 let rec print_mark_v lv = List.fold_right (fun v x -> (Mark.get v)::x) lv [];;
 let rec print_vertex_list lv = List.fold_right (fun v x -> (print_vertex v)::x) lv [];;
 
-let rec separator l1 l2 n =
-	if n = 0 then
-		l1,l2
+let rec separator l1 l2 n liste_fini =
+match liste_fini with
+|[]->if (List.length l1)>(n) then
+		separator (List.tl l1) ((List.hd l1)::l2) (n) []
 	else
-		separator (List.tl l1) ((List.hd l1)::l2) (n-1)
+		if (List.length l2>n) then
+			separator l2 [] (n) ([l1]@liste_fini)
+		else
+			if (l2 = []) then
+				[l1]@liste_fini
+			else
+				([l2]@[l1]@liste_fini)		
+|a::b->if (List.length l1)>(n) then		
+		separator (List.tl l1) ((List.hd l1)::l2) (n) liste_fini
+	else
+		if (List.length l2>n) then
+			separator l2 [] (n) ([l1]@liste_fini)
+		else
+			if (l2 = []) then
+				[l1]@liste_fini
+			else
+				([l2]@[l1]@liste_fini)
 	;;
 	
 
@@ -133,19 +150,12 @@ let rec find_next_step_illimite dag etapePrecedente trace nextStep =
 
 let ordonnanceur_ressources_illimitees dag =
 	let rec ordonnanceur trace =
-		match trace with
-			|[] -> ordonnanceur ([v_sansDep dag]@trace)
-			|[a]-> let next = find_next_step_illimite dag a trace [] in
-					if ((next)=[]) then
+		let y = trouve_sans_dep dag trace in
+					if (y =[]) then
 						trace
 					else
-						ordonnanceur ([next]@trace)
-			|etape::autres_etapes -> let next = find_next_step_illimite dag etape trace [] in
-										if ((next)=[]) then
-											trace
-										else
-											ordonnanceur ([next]@trace)
-					in ordonnanceur []
+						ordonnanceur ([y]@trace)
+		in ordonnanceur []
 ;;				
 
 
@@ -162,6 +172,23 @@ let ordonnanceur_ressources_illimitees dag =
 (*
 val ordonnanceur_ressources_limitees_sans_heuristique : int -> DAG -> Trace
 *)
+let trouve_sans_dep dag trace =
+	let list_v = fold_vertex (fun v x -> v::x) dag [] in		
+		List.fold_right (fun v x ->
+				if ((is_include (pred dag v) (List.flatten trace)) && ((List.mem v (List.flatten trace))=false)) then
+					v::x
+				else
+					x) list_v []
+;;
+
+(*
+let rec update_sansDep dag ressources etapeSuivanteTrouvee reste trace_flattened = 
+	match  reste with 
+	|[] -> 
+	|a::b ->
+	*)
+		
+
 let rec find_next_step_limite_sans_heuristique  dag etapePrecedente trace nextStep = 
 		match etapePrecedente with 
 			|[] -> nextStep
@@ -178,38 +205,25 @@ let rec find_next_step_limite_sans_heuristique  dag etapePrecedente trace nextSt
 let ordonnanceur_ressources_limitees_sans_heuristique ressource dag =
 	let rec ordonnanceur trace =
 		match trace with
-			|[] -> let sans_dep = v_sansDep dag in
-						if (List.length sans_dep)> ressource then
-							let l1,l2 = separator sans_dep [] ressource in
-								ordonnanceur ([l1]@[l2]@trace)
-						else
-								ordonnanceur ([sans_dep]@trace)
-			|[a]-> let next = find_next_step_limite_sans_heuristique dag a trace [] in
-					if ((next)=[]) then
+		|[] -> let y = trouve_sans_dep dag trace in
+					if (y =[]) then
 						trace
 					else
-						if (List.length next)> ressource then
-							let l1,l2 = separator next [] ressource in
-								let taille = (List.length a) in
-									if taille < ressource then
-										begin
-										a = separator l2 a (ressource-taille);
-										l2 = separator l1 l2 (ressource-taille);
-										end
-										if (l1=[]) then
-											ordonnanceur ([l2]@trace)
-										else
-											ordonnanceur ([l1]@[l2]@trace)
-									else
-										ordonnanceur ([l1]@[l2]@trace)
+						ordonnanceur ((separator (y) [] ressource [])@trace)		
+		|a::b ->if (List.length a) < ressource then 
+					let y = (trouve_sans_dep dag trace) in
+						if (y =[]) then
+							trace
 						else
-							ordonnanceur ([next]@trace)
-			|etape::autres_etapes -> let next = find_next_step_limite_sans_heuristique ressource dag etape trace [] in
-										if ((next)=[]) then
-											trace
-										else
-											ordonnanceur ([next]@trace)
-					in ordonnanceur []
+							let ajust = separator y a ressource []  in
+							ordonnanceur (ajust@trace)
+				else
+					let y = (trouve_sans_dep dag trace) in
+					if (y =[]) then
+						trace
+					else							
+						ordonnanceur ((separator y [] ressource [])@trace)	
+		in ordonnanceur []
 ;;	
 
 
