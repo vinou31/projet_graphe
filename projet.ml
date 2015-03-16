@@ -220,24 +220,24 @@ let ordonnanceur_ressources_illimitees dag =
 val ordonnanceur_ressources_limitees_sans_heuristique : int -> DAG -> Trace
 *)
 let ordonnanceur_ressources_limitees_sans_heuristique ressource dag =
-	let rec ordonnanceur trace =
+	let rec ordonnanceur trace c =
 		match trace with
 		|[] -> let y = trouve_sans_dep dag trace in
 					if (y =[]) then
-						trace
+						(trace,c)
 					else
-						ordonnanceur ((separator (y) [] ressource [])@trace)		
+						ordonnanceur ((separator (y) [] ressource [])@trace) (c+1)	
 		|a::b ->let y = (trouve_sans_dep dag trace) in
 						if (y =[]) then
-							trace
+							(trace,c)
 						else
 							let (indep,new_y) = is_depend y a dag in							
 								if ((List.length a) < ressource) && (indep<>[])  then									 
 									let ajust = List.rev (separator indep a ressource [])  in
-										(ordonnanceur ((separator (new_y@(List.flatten(List.rev (List.tl ajust)))) [] ressource [])@[List.hd ajust]@b))
+										(ordonnanceur ((separator (new_y@(List.flatten(List.rev (List.tl ajust)))) [] ressource [])@[List.hd ajust]@b)) (c+1)
 								else						
-									ordonnanceur ((separator y [] ressource [])@trace)	
-		in ordonnanceur []
+									ordonnanceur ((separator y [] ressource [])@trace)	(c+1)
+		in ordonnanceur [] 1
 ;;	
 
 
@@ -258,7 +258,59 @@ let ordonnanceur_ressources_limitees_sans_heuristique ressource dag =
 val ordonnanceur_ressources_limitees_avec_heuristique : int -> DAG -> Trace
 *)
 
+let prof_v dag v = 
+let l = succ dag v in
+let rec prof lv i = 
+	match lv with
+		|[] ->i
+		|a::b -> (max (prof(succ dag a) (i+1)) (prof b i))
+		in prof l 0
+;;
 
+
+
+
+let tri_sans_dep dag l =
+	 List.sort (fun a b -> 
+		if (prof_v dag a)<(prof_v dag b) then
+			1
+			else
+				if (prof_v dag a)>(prof_v dag b) then
+					-1
+					else 
+						0) l
+;;
+
+
+let ordonnanceur_ressources_limitees_avec_heuristique ressource dag =
+	
+	let rec ordonnanceur trace c =
+		match trace with
+		|[] -> let y = tri_sans_dep dag (trouve_sans_dep dag trace) in
+					if (y =[]) then
+						(trace,c)
+					else
+						ordonnanceur ((separator (y) [] ressource [])@trace) (c+1)		
+		|a::b ->let y = tri_sans_dep dag (trouve_sans_dep dag trace) in
+						if (y =[]) then
+							(trace,c)
+						else
+							let (indep,new_y) = is_depend y a dag in							
+								if ((List.length a) < ressource) && (indep<>[])  then									 
+									let ajust = List.rev (separator indep a ressource [])  in
+										(ordonnanceur ((separator (new_y@(List.flatten(List.rev (List.tl ajust)))) [] ressource [])@[List.hd ajust]@b)) (c+1)
+								else						
+									ordonnanceur ((separator y [] ressource [])@trace)	(c+1)
+		in ordonnanceur [] 1
+		
+;;	
+
+
+let time f ressource dag =
+    let t = Sys.time() in
+    let fx = f ressource dag in
+    Printf.printf "Execution time: %fs\n" (Sys.time() -. t);
+    fx
 
 (* entrees: 
    - un nombre entier de ressources
