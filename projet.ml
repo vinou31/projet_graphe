@@ -234,7 +234,10 @@ let ordonnanceur_ressources_limitees_sans_heuristique ressource dag =
 							let (indep,new_y) = is_depend y a dag in							
 								if ((List.length a) < ressource) && (indep<>[])  then									 
 									let ajust = List.rev (separator indep a ressource [])  in
-										(ordonnanceur ((separator (new_y@(List.flatten(List.rev (List.tl ajust)))) [] ressource [])@[List.hd ajust]@b)) (c+1)
+										if new_y = [] then
+											(ordonnanceur  ((List.rev ajust)@b) (c+1))
+										else										
+											(ordonnanceur ((separator (new_y@(List.flatten(List.rev (List.tl ajust)))) [] ressource [])@[List.hd ajust]@b)) (c+1)
 								else						
 									ordonnanceur ((separator y [] ressource [])@trace)	(c+1)
 		in ordonnanceur [] 1
@@ -298,7 +301,10 @@ let ordonnanceur_ressources_limitees_avec_heuristique ressource dag =
 							let (indep,new_y) = is_depend y a dag in							
 								if ((List.length a) < ressource) && (indep<>[])  then									 
 									let ajust = List.rev (separator indep a ressource [])  in
-										(ordonnanceur ((separator (new_y@(List.flatten(List.rev (List.tl ajust)))) [] ressource [])@[List.hd ajust]@b)) (c+1)
+									if new_y = [] then
+										(ordonnanceur  ((List.rev ajust)@b) (c+1))
+									else	
+										(ordonnanceur ((separator (new_y@(List.flatten(List.rev (List.tl ajust)))) [] ressource [])@[List.hd ajust]@b) (c+1))
 								else						
 									ordonnanceur ((separator y [] ressource [])@trace)	(c+1)
 		in ordonnanceur [] 1
@@ -306,11 +312,13 @@ let ordonnanceur_ressources_limitees_avec_heuristique ressource dag =
 ;;	
 
 
+(*
 let time f ressource dag =
     let t = Sys.time() in
     let fx = f ressource dag in
     Printf.printf "Execution time: %fs\n" (Sys.time() -. t);
-    fx
+    fx;;
+*)
 
 (* entrees: 
    - un nombre entier de ressources
@@ -324,3 +332,32 @@ let time f ressource dag =
 (*
 val ordonnanceur_graphe_pondere : int -> DAG -> Trace
 *)
+let creer_n_v dag v =
+	 let n = snd (V.label v) in
+			let rec creer i =
+				match i with
+				|0->()
+				|_->let vi =  V.create((fst(V.label v))^(string_of_int i),1) in 
+						begin
+						add_vertex dag vi;
+						List.iter (fun v -> add_edge dag vi v) (succ dag v);
+						List.iter (fun v -> add_edge dag v vi) (pred dag v);
+						creer (i-1);
+						end
+				in creer n
+;;
+				
+
+let transfo_non_pondere dag =
+	let dag_non_pond = copy dag in
+	begin
+		iter_vertex (fun v -> 
+						begin						
+						(creer_n_v dag_non_pond v);						
+						remove_vertex dag_non_pond v;
+						end) dag_non_pond ;
+		dag_non_pond
+	end
+;;
+
+				
